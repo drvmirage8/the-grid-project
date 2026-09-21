@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Grid — claim a square</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --panel:#FFFFFF;
+    --panel-hi:#F0F1F3;
+    --grid-line: rgba(20,24,30,0.07);
+    --grid-line-strong: rgba(20,24,30,0.16);
+    --text:#1A2028;
+    --text-dim:#6B7480;
+    --brass:#C8912E;
+    --brass-dim: #A6761E;
+    --sold:#2E8776;
+    --sold-dim: rgba(46,135,118,0.14);
+    --danger:#C85A38;
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--paper);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height:100vh;
+    padding: 0 0 80px 0;
+  }
+  a{color:inherit;}
+
+  header{
+    padding: 56px 32px 40px;
+    max-width: 1600px;
+    margin: 0 auto;
+    display:flex;
+    flex-direction:column;
+    gap: 28px;
+  }
+  .kicker{
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-optical-sizing:auto;
+    font-weight:500;
+    font-size: clamp(32px, 5vw, 54px);
+    line-height: 1.08;
+    margin: 8px 0 0 0;
+    max-width: 14ch;
+    color: var(--text);
+  }
+  .lede{
+    font-family: 'Fraunces', serif;
+    font-weight:400;
+    font-size: 18px;
+    line-height:1.55;
+    color: var(--text-dim);
+    max-width: 52ch;
+    margin: 0;
+  }
+  .lede.pledge{
+    color: var(--brass-dim);
+    font-size: 15px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .wfp-link{
+    color: var(--brass-dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .wfp-link:hover{ color: var(--brass); }
+
+  .stats{
+    display:flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--grid-line-strong);
+    padding-top: 24px;
+    margin-top: 8px;
+  }
+  .stat .n{
+    font-family:'Fraunces', serif;
+    font-size: 34px;
+    font-weight: 500;
+    color: var(--brass);
+    line-height:1;
+  }
+  .stat .l{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+  }
+
+  main{
+    max-width: none;
+    margin: 0 auto;
+    padding: 24px 32px 0;
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap: 32px;
+    align-items:start;
+  }
+  @media (max-width: 820px){
+    main{ grid-template-columns: 1fr; }
+  }
+
+  .canvas-wrap{
+    padding: 0 20px;
+    position: relative;
+  }
+  .grid-viewport{
+    border: 2px solid var(--text);
+    background: var(--panel-hi);
+  }
+  #grid{
+    display:block;
+    width: 100%;
+    height: auto;
+    max-height: 82vh;
+    aspect-ratio: 3 / 2;
+  }
+  .grid-hero{
+    width: 100%;
+    height: 85vh;
+    box-sizing: border-box;
+    padding: 20px;
+    border-bottom: 1px solid var(--grid-line-strong);
+    position: relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .floating-price{
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--panel);
+    border: 1px solid var(--text);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    display:none;
+    flex-direction:column;
+    align-items:flex-end;
+    gap: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    z-index: 50;
+  }
+  .fp-close{
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .fp-close:hover{ color: var(--text); }
+  .floating-price.visible{ display:flex; }
+  .fp-size{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .fp-amount{
+    font-family:'Fraunces', serif;
+    font-size: 26px;
+    color: var(--brass);
+    line-height:1;
+  }
+  .fp-reserve{
+    margin-top: 6px;
+    background: var(--brass);
+    color: #1A1305;
+    border: none;
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .fp-reserve:hover{ background:#EDC06A; }
+  .fp-reserve:disabled{
+    background: var(--panel-hi);
+    color: var(--text-dim);
+    cursor:not-allowed;
+  }
+  .canvas-scroll{
+    overflow: auto;
+    border: 2px solid var(--text);
+    background: var(--panel-hi);
+    max-height: 560px;
+  }
+  canvas{
+    display:block;
+    cursor: crosshair;
+    image-rendering: pixelated;
+    user-select: none;
+    -webkit-user-drag: none;
+    touch-action: none;
+  }
+  .canvas-foot{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .legend{
+    display:flex;
+    gap:16px;
+    align-items:center;
+  }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--grid-line-strong);
+    border-radius: var(--radius);
+    padding: 22px;
+    position: sticky;
+    top: 24px;
+  }
+  .panel h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: 20px;
+    margin: 0 0 4px 0;
+  }
+  .panel .sub{
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  .field{
+    display:flex;
+    justify-content:space-between;
+    padding: 10px 0;
+    border-top: 1px solid var(--grid-line);
+    font-size: 13px;
+  }
+  .field:first-of-type{ border-top: none; }
+  .field .k{ color: var(--text-dim); }
+  .field .v{ color: var(--text); }
+  .price{
+    font-family:'Fraunces', serif;
+    font-size: 30px;
+    color: var(--brass);
+    margin: 14px 0 4px 0;
+  }
+  .price-sub{ font-size:12px; color:var(--text-dim); margin-bottom:18px; }
+
+  button.reserve{
+    width:100%;
+    background: var(--brass);
+    color: #1A1305;
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px 16px;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size: 13px;
+    cursor:pointer;
+    transition: background 0.15s ease;
+  }
+  button.reserve:hover{ background:#EDC06A; }
+  button.reserve:disabled{
+    background: var(--panel-hi);
+    color: var(--text-dim);
+    cursor:not-allowed;
+  }
+  .clear-selection{
+    display:block;
+    width:100%;
+    background:none;
+    border:none;
+    color: var(--text-dim);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor:pointer;
+    padding: 10px 0 0;
+  }
+  .clear-selection:hover{ color: var(--text); }
+
+  .hint{
+    font-size:12px;
+    color: var(--text-dim);
+    margin-top:14px;
+    line-height:1.5;
+    padding-top:14px;
+    border-top: 1px solid var(--grid-line);
+  }
+
+  dialog{
+    border:none;
+    border-radius: var(--radius);
+    background: var(--panel);
+    color: var(--text);
+    padding: 0;
+    max-width: 420px;
+    width: 90vw;
+  }
+  #claimDialog{
+    max-width: 620px;
+  }
+  dialog::backdrop{ background: rgba(6,14,24,0.7); }
+  .dialog-inner{ padding: 26px; }
+  .dialog-inner h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: 22px;
+    margin: 0 0 6px 0;
+  }
+  .dialog-inner p{ font-size:13px; color:var(--text-dim); line-height:1.6; }
+  .dialog-inner label{
+    display:block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 16px 0 6px;
+  }
+  .dialog-inner input{
+    width:100%;
+    background: var(--panel-hi);
+    border: 1px solid var(--grid-line-strong);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .dialog-actions{
+    display:flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .dialog-actions button{
+    flex:1;
+    padding: 11px;
+    border-radius: var(--radius);
+    border: none;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    cursor:pointer;
+  }
+  .btn-cancel{ background: var(--panel-hi); color: var(--text); }
+  .btn-confirm{ background: var(--brass); color:#1A1305; font-weight:600; }
+  .btn-confirm:disabled{
+    background: var(--panel-hi);
+    color: var(--text-dim);
+    cursor: not-allowed;
+  }
+  .agree-label{
+    display:flex;
+    align-items:flex-start;
+    gap: 8px;
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  .agree-label input[type="checkbox"]{
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .link-preview-url{
+    margin: 12px 0 4px;
+    padding: 12px;
+    background: var(--panel-hi);
+    border-radius: var(--radius);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    word-break: break-all;
+    color: var(--text);
+  }
+
+  .palette{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom: 12px;
+  }
+  .swatch-btn{
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding:0;
+  }
+  .swatch-btn.active{ border-color: var(--text); }
+  .saved-swatch{
+    position: relative;
+    border-color: var(--grid-line-strong) !important;
+  }
+  .saved-swatch::after{
+    content: '↺';
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 10px;
+    background: var(--panel);
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    line-height: 12px;
+    text-align: center;
+    color: var(--text-dim);
+  }
+  .color-map{
+    display:flex;
+    flex-direction:column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  #svCanvas, #hueCanvas{
+    display:block;
+    border-radius: 3px;
+    border: 1px solid var(--grid-line-strong);
+    cursor: crosshair;
+    width: 100%;
+    height: auto;
+  }
+  .color-current{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .swatch-preview{
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid var(--grid-line-strong);
+    display:inline-block;
+    flex-shrink:0;
+  }
+  #hexInput{
+    flex:1;
+    background: var(--panel-hi);
+    border: 1px solid var(--grid-line-strong);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .paint-wrap{
+    display:inline-block;
+    max-height: 420px;
+    padding: 0;
+  }
+  #paintCanvas{
+    display:block;
+    cursor: crosshair;
+    image-rendering: pixelated;
+  }
+  .paint-toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin: 8px 0 4px;
+  }
+  .paint-hint{
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .zoom-controls{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .zoom-controls button{
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    border: 1px solid var(--grid-line-strong);
+    background: var(--panel-hi);
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 15px;
+    line-height:1;
+    cursor: pointer;
+  }
+  .zoom-controls button:hover{ background: var(--grid-line-strong); }
+  #zoomLabel{ min-width: 38px; text-align:center; }
+
+  .note{
+    max-width:1100px;
+    margin: 40px auto 0;
+    padding: 16px 24px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--grid-line-strong);
+  }
+  .charity-note{
+    max-width: 700px;
+    margin: 56px auto 0;
+    padding: 0 24px;
+  }
+  .charity-note h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: 24px;
+    margin: 0 0 12px;
+    color: var(--text);
+  }
+  .charity-note h3{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: 17px;
+    margin: 24px 0 8px;
+    color: var(--text);
+  }
+  .charity-note p{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    margin: 0;
+  }
+  .creator-note{
+    margin-top: 28px;
+    padding: 20px;
+    background: var(--panel-hi);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--brass);
+  }
+  .donation-proof{
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: var(--panel-hi);
+    border-radius: var(--radius);
+    border: 1px dashed var(--grid-line-strong);
+  }
+  .creator-label{
+    font-size: 11px !important;
+    color: var(--brass-dim) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px !important;
+  }
+  .creator-text{
+    font-family:'Fraunces', serif !important;
+    font-style: italic;
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    color: var(--text) !important;
+  }
+  .faq-section, .contact-section, .legal-section{
+    max-width: 700px;
+    margin: 48px auto 0;
+    padding: 0 24px;
+  }
+  .faq-section h2, .contact-section h2, .legal-section h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: 24px;
+    margin: 0 0 20px;
+    color: var(--text);
+  }
+  .faq-item{
+    padding: 16px 0;
+    border-top: 1px solid var(--grid-line-strong);
+  }
+  .faq-item h3{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size: 13px;
+    color: var(--text);
+    margin: 0 0 8px;
+  }
+  .faq-item p{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text-dim);
+    margin: 0;
+  }
+  .contact-section p{
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 0 0 10px;
+  }
+  .contact-email{
+    display:inline-block;
+    font-family:'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight:600;
+    color: var(--brass-dim);
+    text-decoration: none;
+    border-bottom: 1px solid var(--brass-dim);
+    padding-bottom: 2px;
+  }
+  .contact-email:hover{ color: var(--brass); border-color: var(--brass); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">15,000 squares total — $1 each</div>
+  <h1>Claim a square of the grid. Yours to keep.</h1>
+  <p class="lede">Every square is $1. Paint your block any colors you like, add a link if you want, and it stays exactly as you left it. No expiry, no renewal fees.</p>
+  <p class="lede pledge">Half of everything raised here goes to the <a href="https://www.wfp.org/support-us" target="_blank" rel="noopener" class="wfp-link">World Food Programme's</a> Sudan response once the goal is reached.</p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="n" id="stat-sold">0</div>
+      <div class="l">squares claimed</div>
+    </div>
+    <div class="stat">
+      <div class="n" id="stat-remaining">15,000</div>
+      <div class="l">squares open</div>
+    </div>
+    <div class="stat">
+      <div class="n" id="stat-raised">$0</div>
+      <div class="l">raised so far</div>
+    </div>
+  </div>
+</header>
+
+<section class="grid-hero">
+  <div class="grid-viewport" id="scrollWrap">
+    <canvas id="grid" width="1500" height="1000" draggable="false"></canvas>
+  </div>
+  <div class="floating-price" id="floatingPrice">
+    <button class="fp-close" id="fpCloseBtn" title="Clear selection" aria-label="Clear selection">×</button>
+    <div class="fp-size" id="fpSize">10 × 10</div>
+    <div class="fp-amount" id="fpAmount">$100</div>
+    <button class="fp-reserve" id="fpReserveBtn">Reserve</button>
+  </div>
+</section>
+
+<main>
+  <div class="canvas-wrap">
+    <div class="canvas-foot">
+      <div class="legend">
+        <span class="legend-item"><span class="swatch" style="background:var(--sold-dim)"></span>claimed</span>
+        <span class="legend-item"><span class="swatch" style="background:var(--brass)"></span>selected</span>
+        <span class="legend-item"><span class="swatch" style="background:transparent;border:1px solid var(--grid-line-strong)"></span>open</span>
+      </div>
+      <div id="coordHint">drag to select a block</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Your selection</h2>
+    <div class="sub">click and drag to select any size</div>
+
+    <div class="field"><span class="k">position</span><span class="v" id="selPos">—</span></div>
+    <div class="field"><span class="k">size</span><span class="v" id="selSize">—</span></div>
+    <div class="field"><span class="k">squares</span><span class="v" id="selCount">0</span></div>
+
+    <div class="price" id="selPrice">$0</div>
+    <div class="price-sub">$1 per square, charged once</div>
+
+    <button class="reserve" id="reserveBtn" disabled>Select a block first</button>
+    <button class="clear-selection" id="clearSelectionBtn">Clear selection</button>
+
+    <div class="hint">Clicking reserve opens a real Stripe checkout page. Your square shows up here once payment is confirmed.</div>
+  </div>
+</main>
+
+<section class="charity-note">
+  <h2>Why the World Food Programme</h2>
+  <p>Sudan is currently facing one of the largest humanitarian crises in the world — famine has been confirmed in parts of Darfur and Kordofan, and tens of millions of people need urgent help. The World Food Programme is one of the organizations leading the food response on the ground there.</p>
+
+  <h3>How this actually works</h3>
+  <p>Every payment made on this site goes through Stripe, the same as any normal purchase. Once the 15,000-square goal is reached, half of everything raised will be donated directly through WFP's official donation page — not a middleman, not an automatic split, a real transfer I make myself. I'll post the donation confirmation right here on this page once it's done, so the pledge isn't just a promise on a webpage.</p>
+  <p style="margin-top:14px;">Want to donate to WFP directly yourself, outside of this project? <a href="https://www.wfp.org/support-us" target="_blank" rel="noopener" class="wfp-link">Donate here</a>.</p>
+  <p style="margin-top:14px; font-size:12px;">This is a personal pledge, not an official partnership with or endorsement by the World Food Programme — I'm simply directing part of what's raised here to their public donation channel myself.</p>
+
+  <div class="donation-proof" id="donationProof">
+    <p class="creator-label">Donation proof</p>
+    <p style="font-size:13px; color:var(--text-dim); margin:0;">Not yet reached — proof of the actual transfer will be posted here once the 15,000-square goal is hit.</p>
+  </div>
+
+  <div class="creator-note">
+    <p class="creator-label">A note from the creator who made this</p>
+    <p class="creator-text">This project was heavily inspired by The Million Dollar Homepage, a site created back in August 2005. It started off as a hobby, then turned into something more valuable, with the goal of benefiting people in need in Sudan, while also giving people value by letting them promote their businesses or aspirations through this site.</p>
+  </div>
+</section>
+
+<section class="faq-section">
+  <h2>Frequently asked questions</h2>
+
+  <div class="faq-item">
+    <h3>What happens after I pay?</h3>
+    <p>Your painted design is saved and shows up on the grid for everyone to see, for as long as this site is running. If you added a link, clicking your square takes visitors straight to it.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Is my square really mine to keep?</h3>
+    <p>Yes — once it's confirmed, it's yours, with no expiry date and no renewal fees. I intend to keep this site running indefinitely, though like any website I can't guarantee it against something outside my control, like a hosting provider shutting down — that risk is accepted as part of buying a square here.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Can someone else buy a square I already own?</h3>
+    <p>No. Once a square is claimed, it's locked — no one else can select or purchase it, including me.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Can I change my design after buying?</h3>
+    <p>Not currently — what you paint before checking out is what gets saved. Think of it like the original pixel projects this is inspired by: once it's placed, it stays.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>How do I know my payment actually went through?</h3>
+    <p>You'll be taken through Stripe's secure checkout, the same system countless real businesses use. Once payment is confirmed, your square appears on the grid — that's your confirmation.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Is this a real charity donation, or just a claim?</h3>
+    <p>It's real. Once the 15,000-square goal is reached, I'll personally donate half of everything raised to the World Food Programme through their official site, and post proof of the donation right here.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>What's the minimum I can buy?</h3>
+    <p>Just one square, if that's all you want — there's no minimum block size.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Something went wrong — who do I contact?</h3>
+    <p>Reach out directly using the contact info below.</p>
+  </div>
+</section>
+
+<section class="contact-section">
+  <h2>Contact</h2>
+  <p>Questions, issues with your square, or anything else — email me directly:</p>
+  <a class="contact-email" href="mailto:drvmirage8@gmail.com">drvmirage8@gmail.com</a>
+</section>
+
+<section class="legal-section" id="legalSection">
+  <h2>Site information</h2>
+
+  <div class="faq-item">
+    <h3>Built with AI assistance</h3>
+    <p>This site's design, code, and written content were built with the help of AI tools, under my direction and review. I'm sharing that plainly here.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Who runs this site</h3>
+    <p>This site is operated by <span id="operatorName">The Grid</span>, based in Switzerland. You can reach me at <a class="wfp-link" href="mailto:drvmirage8@gmail.com">drvmirage8@gmail.com</a>.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Privacy</h3>
+    <p>Payments are processed securely by Stripe — this site never sees or stores your card details. Whatever you choose to paint, link, and the size/position of your square is public and visible to anyone who visits — that's your own content, not something tracked about you. This site also uses Supabase (database) and Vercel (hosting) to run — both only process what's needed to make the site work, not to track visitors or serve outside ads. No cookies or tracking scripts are used on this site directly. Want something removed? Email me.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Content rules</h3>
+    <p>Squares may not be used for illegal content, hate speech, harassment, adult content, malware or phishing links, or someone else's copyrighted work, trademark, name, or likeness used without their permission. I reserve the right to remove any square that breaks these rules, without a refund.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>No intentional griefing</h3>
+    <p>Purchases made with the goal of fragmenting the grid or blocking others from claiming a larger area — whether that's scattered single squares or any other pattern with the same intent — aren't a permitted use of this site. More broadly, anything that appears intended to disrupt the grid or other users isn't either. I reserve the right to remove squares used this way, without a refund, to keep the grid fair and usable for everyone.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Liability</h3>
+    <p>This site is provided as-is. I've built and tested it carefully, but I can't guarantee it will always be free of bugs or interruptions. By using this site, you accept that my responsibility for any issue is limited to the amount you actually paid — I'm not liable for indirect or consequential losses.</p>
+  </div>
+
+  <div class="faq-item">
+    <h3>Governing law</h3>
+    <p>This site is operated from Switzerland, and Swiss law governs its use.</p>
+  </div>
+</section>
+
+<dialog id="claimDialog">
+  <div class="dialog-inner">
+    <h3>Reserve this block</h3>
+    <p id="dialogSub">10 squares — $10</p>
+
+    <label>Paint your squares</label>
+    <div class="palette" id="palette">
+      <button class="swatch-btn active" data-color="#C8912E" style="background:#C8912E"></button>
+      <button class="swatch-btn" data-color="#C8392E" style="background:#C8392E"></button>
+      <button class="swatch-btn" data-color="#2E8776" style="background:#2E8776"></button>
+      <button class="swatch-btn" data-color="#2E5FC8" style="background:#2E5FC8"></button>
+      <button class="swatch-btn" data-color="#6A3EC8" style="background:#6A3EC8"></button>
+      <button class="swatch-btn" data-color="#1A2028" style="background:#1A2028"></button>
+      <button class="swatch-btn" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid var(--grid-line-strong)"></button>
+      <button class="swatch-btn saved-swatch" id="savedColorBtn" data-color="#C8912E" title="Switch back to your last color" style="background:#C8912E"></button>
+    </div>
+
+    <div class="color-map">
+      <canvas id="svCanvas" width="320" height="180" draggable="false"></canvas>
+      <canvas id="hueCanvas" width="320" height="20" draggable="false"></canvas>
+    </div>
+    <div class="color-current">
+      <span class="swatch-preview" id="colorPreview"></span>
+      <input id="hexInput" type="text" value="#C8912E" maxlength="7">
+    </div>
+
+    <div class="canvas-scroll paint-wrap">
+      <canvas id="paintCanvas" draggable="false"></canvas>
+    </div>
+    <div class="paint-toolbar">
+      <div class="paint-hint">click or drag to paint a square</div>
+      <div class="zoom-controls" id="zoomControls" style="display:none">
+        <button type="button" id="zoomOutBtn">−</button>
+        <span id="zoomLabel">100%</span>
+        <button type="button" id="zoomInBtn">+</button>
+      </div>
+    </div>
+
+    <label for="nameInput">Name (optional — shown when someone hovers your square)</label>
+    <input id="nameInput" type="text" placeholder="Your name or project" maxlength="150">
+
+    <label for="linkInput">Link (optional — where your square points to)</label>
+    <input id="linkInput" type="text" placeholder="https://">
+
+    <label class="agree-label">
+      <input type="checkbox" id="agreeCheckbox">
+      I've read the <a href="#" id="agreeTermsLink" class="wfp-link">content rules and site info</a> below
+    </label>
+
+    <div class="dialog-actions">
+      <button class="btn-cancel" id="cancelBtn">Cancel</button>
+      <button class="btn-confirm" id="confirmBtn" disabled>Continue to payment</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="linkPreviewDialog">
+  <div class="dialog-inner">
+    <h3>Leaving this site</h3>
+    <p>This square links to:</p>
+    <div class="link-preview-url" id="linkPreviewUrl"></div>
+    <div class="dialog-actions">
+      <button class="btn-cancel" id="linkCancelBtn">Cancel</button>
+      <button class="btn-confirm" id="linkVisitBtn">Visit site</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="note">Squares only appear once payment is confirmed through Stripe — unpaid attempts stay invisible and don't block anyone else.</div>
+
+<script>
+(function(){
+  const GRID_W = 150;       // 150 x 100 blocks of 10x10 px each = 15,000 "squares"
+  const GRID_H = 100;       // a real rectangle of square cells, not a stretched square grid
+  const CELL = 10;          // px per square on canvas
+  const canvas = document.getElementById('grid');
+  const ctx = canvas.getContext('2d');
+  const scrollWrap = document.getElementById('scrollWrap');
+
+  canvas.width = GRID_W * CELL;
+  canvas.height = GRID_H * CELL;
+
+  // --- Supabase connection ---
+  const SUPABASE_URL = 'https://gcumkxftniibhkrxmurs.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdjdW1reGZ0bmlpYmhrcnhtdXJzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3NDI2OTYsImV4cCI6MjEwNTMxODY5Nn0.2Rg97vTE9b2HQkNVhnea7xxnwlLzRLLP_F0ZV7TGwQ8';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+
+  let sold = []; // array of {x,y,w,h,link,colors,name}, loaded from Supabase
+
+  async function loadSoldFromDB(){
+    // Only show squares once payment has actually been confirmed —
+    // unpaid/pending attempts stay invisible and don't block anyone else.
+    // Tries progressively smaller column sets so one missing column never
+    // silently drops a working one too.
+    const attempts = [
+      'x,y,w,h,link,colors,name',
+      'x,y,w,h,link,colors',
+      'x,y,w,h,link,name',
+      'x,y,w,h,link'
+    ];
+    for(const columns of attempts){
+      const { data, error } = await sb.from('pixels').select(columns).eq('status', 'confirmed');
+      if(!error) return data || [];
+      if(!/column/i.test(error.message || '')){
+        console.error('Failed to load pixels:', error.message || JSON.stringify(error));
+        document.getElementById('coordHint').textContent = 'could not load saved squares';
+        return [];
+      }
+      // otherwise a missing-column error — try the next, smaller column set
+    }
+    return [];
+  }
+
+  async function insertSoldToDB(block){
+    // Same idea on the way in — try with everything, then progressively
+    // drop only the specific column that's actually missing.
+    const attempts = [
+      { x: block.x, y: block.y, w: block.w, h: block.h, link: block.link, colors: block.colors, name: block.name },
+      { x: block.x, y: block.y, w: block.w, h: block.h, link: block.link, colors: block.colors },
+      { x: block.x, y: block.y, w: block.w, h: block.h, link: block.link, name: block.name },
+      { x: block.x, y: block.y, w: block.w, h: block.h, link: block.link }
+    ];
+    for(const row of attempts){
+      const { error } = await sb.from('pixels').insert(row);
+      if(!error) return true;
+      if(!/column/i.test(error.message || '')){
+        console.error('Failed to save pixel:', error.message || JSON.stringify(error));
+        return false;
+      }
+    }
+    return false;
+  }
+
+  // Pre-render the grid lines once to an offscreen canvas so every redraw
+  // (which happens continuously while dragging) stays fast, and so the
+  // visible grid always matches the real 10px cells used for selection.
+  const gridPattern = document.createElement('canvas');
+  gridPattern.width = GRID_W * CELL;
+  gridPattern.height = GRID_H * CELL;
+  (function buildGridPattern(){
+    const g = gridPattern.getContext('2d');
+    g.fillStyle = '#FFFFFF';
+    g.fillRect(0, 0, gridPattern.width, gridPattern.height);
+    g.strokeStyle = 'rgba(20,24,30,0.10)';
+    g.lineWidth = 1;
+    for(let i=0;i<=GRID_W;i++){
+      g.beginPath(); g.moveTo(i*CELL+0.5,0); g.lineTo(i*CELL+0.5, GRID_H*CELL); g.stroke();
+    }
+    for(let j=0;j<=GRID_H;j++){
+      g.beginPath(); g.moveTo(0,j*CELL+0.5); g.lineTo(GRID_W*CELL,j*CELL+0.5); g.stroke();
+    }
+  })();
+
+  let dragStart = null;
+  let dragEnd = null;
+  let selection = null; // {x,y,w,h} in cell units
+
+  function cellFromEvent(e){
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const px = (e.clientX - rect.left) * scaleX;
+    const py = (e.clientY - rect.top) * scaleY;
+    let cx = Math.floor(px / CELL);
+    let cy = Math.floor(py / CELL);
+    cx = Math.max(0, Math.min(GRID_W-1, cx));
+    cy = Math.max(0, Math.min(GRID_H-1, cy));
+    return {cx, cy};
+  }
+
+  function normalizeSelection(a, b){
+    const x0 = Math.min(a.cx, b.cx);
+    const y0 = Math.min(a.cy, b.cy);
+    const x1 = Math.max(a.cx, b.cx);
+    const y1 = Math.max(a.cy, b.cy);
+    return { x:x0, y:y0, w:(x1-x0+1), h:(y1-y0+1) };
+  }
+
+  function isSold(x,y){
+    return sold.some(b => x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h);
+  }
+
+  function soldBlockAt(x,y){
+    return sold.find(b => x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h) || null;
+  }
+
+  function draw(){
+    ctx.drawImage(gridPattern, 0, 0);
+
+    // sold blocks — painted colors if present, else a flat tint fallback
+    sold.forEach(b=>{
+      if(b.colors){
+        const arr = b.colors.split(',');
+        for(let j=0;j<b.h;j++){
+          for(let i=0;i<b.w;i++){
+            const hex = arr[j*b.w+i];
+            ctx.fillStyle = hex ? ('#'+hex) : '#FFFFFF';
+            ctx.fillRect((b.x+i)*CELL, (b.y+j)*CELL, CELL, CELL);
+          }
+        }
+      } else {
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--sold-dim').trim();
+        ctx.fillRect(b.x*CELL, b.y*CELL, b.w*CELL, b.h*CELL);
+      }
+    });
+    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--sold').trim();
+    ctx.lineWidth = 1;
+    sold.forEach(b=>{
+      ctx.strokeRect(b.x*CELL+0.5, b.y*CELL+0.5, b.w*CELL-1, b.h*CELL-1);
+    });
+
+    // selection
+    if(selection){
+      ctx.fillStyle = 'rgba(200,145,46,0.22)';
+      ctx.fillRect(selection.x*CELL, selection.y*CELL, selection.w*CELL, selection.h*CELL);
+      ctx.strokeStyle = '#C8912E';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(selection.x*CELL+1, selection.y*CELL+1, selection.w*CELL-2, selection.h*CELL-2);
+    }
+  }
+
+  let panelInView = false;
+  function updateFloatingPriceVisibility(){
+    const fp = document.getElementById('floatingPrice');
+    if(selection && !panelInView){
+      fp.classList.add('visible');
+    } else {
+      fp.classList.remove('visible');
+    }
+  }
+
+  function updatePanel(){
+    const posEl = document.getElementById('selPos');
+    const sizeEl = document.getElementById('selSize');
+    const countEl = document.getElementById('selCount');
+    const priceEl = document.getElementById('selPrice');
+    const btn = document.getElementById('reserveBtn');
+    const fpSize = document.getElementById('fpSize');
+    const fpAmount = document.getElementById('fpAmount');
+    const fpBtn = document.getElementById('fpReserveBtn');
+
+    if(!selection){
+      posEl.textContent = '—';
+      sizeEl.textContent = '—';
+      countEl.textContent = '0';
+      priceEl.textContent = '$0';
+      btn.disabled = true;
+      btn.textContent = 'Select a block first';
+      updateFloatingPriceVisibility();
+      return;
+    }
+    const squares = selection.w * selection.h;
+    posEl.textContent = `${selection.x}, ${selection.y}`;
+    sizeEl.textContent = `${selection.w} × ${selection.h}`;
+    countEl.textContent = squares;
+    priceEl.textContent = `$${squares}`;
+
+    const overlapsSold = sold.some(b =>
+      selection.x < b.x+b.w && selection.x+selection.w > b.x &&
+      selection.y < b.y+b.h && selection.y+selection.h > b.y
+    );
+
+    fpSize.textContent = `${selection.w} × ${selection.h} — ${squares} squares`;
+    fpAmount.textContent = `$${squares}`;
+    updateFloatingPriceVisibility();
+
+    if(overlapsSold){
+      btn.disabled = true;
+      btn.textContent = 'Overlaps a claimed square';
+      fpBtn.disabled = true;
+      fpBtn.textContent = 'Overlaps claimed square';
+    } else {
+      btn.disabled = false;
+      btn.textContent = `Reserve for $${squares}`;
+      fpBtn.disabled = false;
+      fpBtn.textContent = 'Reserve';
+    }
+  }
+
+  function updateStats(){
+    const TOTAL_SQUARES = GRID_W * GRID_H;
+    const claimed = sold.reduce((sum,b)=> sum + b.w*b.h, 0);
+    document.getElementById('stat-sold').textContent = claimed.toLocaleString();
+    document.getElementById('stat-remaining').textContent = (TOTAL_SQUARES-claimed).toLocaleString();
+    document.getElementById('stat-raised').textContent = '$' + claimed.toLocaleString();
+  }
+
+  let mouseDownCell = null;
+  let dragMoved = false;
+
+  canvas.addEventListener('mousedown', (e)=>{
+    e.preventDefault();
+    dragStart = cellFromEvent(e);
+    dragEnd = dragStart;
+    mouseDownCell = dragStart;
+    dragMoved = false;
+    selection = normalizeSelection(dragStart, dragEnd);
+    draw();
+    updatePanel();
+  });
+  canvas.addEventListener('mousemove', (e)=>{
+    const c = cellFromEvent(e);
+    document.getElementById('coordHint').textContent = `${c.cx}, ${c.cy}`;
+
+    const hoverBlock = soldBlockAt(c.cx, c.cy);
+    if(hoverBlock && (hoverBlock.name || hoverBlock.link)){
+      canvas.style.cursor = hoverBlock.link ? 'pointer' : 'default';
+      canvas.title = hoverBlock.name
+        ? (hoverBlock.link ? `${hoverBlock.name} — ${hoverBlock.link}` : hoverBlock.name)
+        : hoverBlock.link;
+    } else {
+      canvas.style.cursor = 'crosshair';
+      canvas.title = '';
+    }
+
+    if(dragStart){
+      if(c.cx !== mouseDownCell.cx || c.cy !== mouseDownCell.cy) dragMoved = true;
+      dragEnd = c;
+      selection = normalizeSelection(dragStart, dragEnd);
+      draw();
+      updatePanel();
+    }
+  });
+  window.addEventListener('mouseup', ()=>{
+    dragStart = null;
+  });
+
+  // A plain click (no drag) on an already-claimed square with a link shows
+  // a preview of the destination first — never opens it blindly.
+  canvas.addEventListener('click', (e)=>{
+    if(dragMoved) return;
+    const c = cellFromEvent(e);
+    const block = soldBlockAt(c.cx, c.cy);
+    if(block && block.link){
+      const url = /^https?:\/\//i.test(block.link) ? block.link : 'https://' + block.link;
+      showLinkPreview(url);
+    }
+  });
+
+  function showLinkPreview(url){
+    document.getElementById('linkPreviewUrl').textContent = url;
+    document.getElementById('linkPreviewDialog').dataset.url = url;
+    document.getElementById('linkPreviewDialog').showModal();
+  }
+  document.getElementById('linkCancelBtn').addEventListener('click', ()=>{
+    document.getElementById('linkPreviewDialog').close();
+  });
+  document.getElementById('linkVisitBtn').addEventListener('click', ()=>{
+    const url = document.getElementById('linkPreviewDialog').dataset.url;
+    window.open(url, '_blank', 'noopener');
+    document.getElementById('linkPreviewDialog').close();
+  });
+
+  const dialog = document.getElementById('claimDialog');
+
+  // --- Paint tool state ---
+  let paintData = [];      // array of hex strings (no '#'), one per cell, row-major
+  let paintW = 0, paintH = 0;
+  let currentColor = '#C8912E';
+  const paintCanvas = document.getElementById('paintCanvas');
+  const pctx = paintCanvas.getContext('2d');
+  let paintCellPx = 16;
+
+  let paintBaseCellPx = 16;
+  let paintZoom = 1;
+
+  let lastPaintKey = null;
+
+  function initPaint(sel){
+    const key = `${sel.x},${sel.y},${sel.w},${sel.h}`;
+    paintW = sel.w;
+    paintH = sel.h;
+
+    // Only wipe the painted design if this is genuinely a different square —
+    // reopening the same selection (e.g. after checking the site info link)
+    // should keep whatever was already painted.
+    if(key !== lastPaintKey){
+      paintData = new Array(paintW * paintH).fill('ffffff');
+      lastPaintKey = key;
+    }
+
+    paintBaseCellPx = Math.max(4, Math.min(32, Math.floor(420 / Math.max(paintW, paintH))));
+    paintZoom = 1;
+
+    const zoomControls = document.getElementById('zoomControls');
+    zoomControls.style.display = (paintW * paintH > 100) ? 'flex' : 'none';
+
+    applyPaintZoom();
+  }
+
+  function applyPaintZoom(){
+    paintCellPx = Math.max(4, Math.round(paintBaseCellPx * paintZoom));
+    paintCanvas.width = paintW * paintCellPx;
+    paintCanvas.height = paintH * paintCellPx;
+    document.getElementById('zoomLabel').textContent = Math.round(paintZoom * 100) + '%';
+    paintDraw();
+  }
+
+  document.getElementById('zoomInBtn').addEventListener('click', ()=>{
+    paintZoom = Math.min(6, paintZoom + 0.5);
+    applyPaintZoom();
+  });
+  document.getElementById('zoomOutBtn').addEventListener('click', ()=>{
+    paintZoom = Math.max(1, paintZoom - 0.5);
+    applyPaintZoom();
+  });
+
+  function paintDraw(){
+    for(let j=0;j<paintH;j++){
+      for(let i=0;i<paintW;i++){
+        pctx.fillStyle = '#' + paintData[j*paintW+i];
+        pctx.fillRect(i*paintCellPx, j*paintCellPx, paintCellPx, paintCellPx);
+      }
+    }
+    if(paintCellPx >= 6){
+      pctx.strokeStyle = 'rgba(20,24,30,0.15)';
+      pctx.lineWidth = 1;
+      for(let i=0;i<=paintW;i++){
+        pctx.beginPath(); pctx.moveTo(i*paintCellPx+0.5,0); pctx.lineTo(i*paintCellPx+0.5, paintH*paintCellPx); pctx.stroke();
+      }
+      for(let j=0;j<=paintH;j++){
+        pctx.beginPath(); pctx.moveTo(0,j*paintCellPx+0.5); pctx.lineTo(paintW*paintCellPx, j*paintCellPx+0.5); pctx.stroke();
+      }
+    }
+  }
+
+  function paintCellFromEvent(e){
+    const rect = paintCanvas.getBoundingClientRect();
+    const scaleX = paintCanvas.width / rect.width;
+    const scaleY = paintCanvas.height / rect.height;
+    const px = (e.clientX - rect.left) * scaleX;
+    const py = (e.clientY - rect.top) * scaleY;
+    const i = Math.max(0, Math.min(paintW-1, Math.floor(px / paintCellPx)));
+    const j = Math.max(0, Math.min(paintH-1, Math.floor(py / paintCellPx)));
+    return {i, j};
+  }
+
+  let paintDragging = false;
+  function paintAt(e){
+    const {i,j} = paintCellFromEvent(e);
+    paintData[j*paintW+i] = currentColor.replace('#','');
+    paintDraw();
+  }
+  paintCanvas.addEventListener('mousedown', (e)=>{ e.preventDefault(); paintDragging = true; paintAt(e); });
+  paintCanvas.addEventListener('mousemove', (e)=>{ if(paintDragging) paintAt(e); });
+  window.addEventListener('mouseup', ()=>{ paintDragging = false; });
+
+  document.querySelectorAll('.swatch-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setActiveSwatch(btn);
+      setColor(btn.dataset.color, true);
+    });
+  });
+
+  function setActiveSwatch(btn){
+    document.querySelectorAll('.swatch-btn').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+  }
+
+  // --- Color map: hue strip + saturation/brightness square ---
+  const svCanvas = document.getElementById('svCanvas');
+  const svCtx = svCanvas.getContext('2d');
+  const hueCanvas = document.getElementById('hueCanvas');
+  const hueCtx = hueCanvas.getContext('2d');
+  const colorPreview = document.getElementById('colorPreview');
+  const hexInput = document.getElementById('hexInput');
+
+  let hue = 38, sat = 78, val = 78; // starting point, roughly matches #C8912E
+
+  function hsvToHex(h, s, v){
+    s /= 100; v /= 100;
+    const c = v * s;
+    const x = c * (1 - Math.abs(((h/60) % 2) - 1));
+    const m = v - c;
+    let r=0,g=0,b=0;
+    if(h<60){r=c;g=x;b=0;} else if(h<120){r=x;g=c;b=0;}
+    else if(h<180){r=0;g=c;b=x;} else if(h<240){r=0;g=x;b=c;}
+    else if(h<300){r=x;g=0;b=c;} else {r=c;g=0;b=x;}
+    const toHex = n => Math.round((n+m)*255).toString(16).padStart(2,'0');
+    return '#' + toHex(r) + toHex(g) + toHex(b);
+  }
+
+  function drawHueStrip(){
+    const grad = hueCtx.createLinearGradient(0,0,hueCanvas.width,0);
+    for(let i=0;i<=360;i+=30){ grad.addColorStop(i/360, `hsl(${i},100%,50%)`); }
+    hueCtx.fillStyle = grad;
+    hueCtx.fillRect(0,0,hueCanvas.width,hueCanvas.height);
+    const x = (hue/360) * hueCanvas.width;
+    hueCtx.strokeStyle = '#1A2028';
+    hueCtx.lineWidth = 2;
+    hueCtx.strokeRect(x-3, 0, 6, hueCanvas.height);
+    hueCtx.strokeStyle = '#FFFFFF';
+    hueCtx.lineWidth = 1;
+    hueCtx.strokeRect(x-3, 0, 6, hueCanvas.height);
+  }
+
+  function drawSVSquare(){
+    svCtx.fillStyle = `hsl(${hue},100%,50%)`;
+    svCtx.fillRect(0,0,svCanvas.width,svCanvas.height);
+    const whiteGrad = svCtx.createLinearGradient(0,0,svCanvas.width,0);
+    whiteGrad.addColorStop(0,'rgba(255,255,255,1)');
+    whiteGrad.addColorStop(1,'rgba(255,255,255,0)');
+    svCtx.fillStyle = whiteGrad;
+    svCtx.fillRect(0,0,svCanvas.width,svCanvas.height);
+    const blackGrad = svCtx.createLinearGradient(0,0,0,svCanvas.height);
+    blackGrad.addColorStop(0,'rgba(0,0,0,0)');
+    blackGrad.addColorStop(1,'rgba(0,0,0,1)');
+    svCtx.fillStyle = blackGrad;
+    svCtx.fillRect(0,0,svCanvas.width,svCanvas.height);
+
+    const px = (sat/100) * svCanvas.width;
+    const py = (1 - val/100) * svCanvas.height;
+    svCtx.beginPath();
+    svCtx.arc(px, py, 6, 0, Math.PI*2);
+    svCtx.strokeStyle = '#FFFFFF';
+    svCtx.lineWidth = 2;
+    svCtx.stroke();
+    svCtx.beginPath();
+    svCtx.arc(px, py, 6, 0, Math.PI*2);
+    svCtx.strokeStyle = 'rgba(0,0,0,0.4)';
+    svCtx.lineWidth = 1;
+    svCtx.stroke();
+  }
+
+  function setColor(hex, syncMap){
+    if(hex.toLowerCase() !== currentColor.toLowerCase()){
+      const savedBtn = document.getElementById('savedColorBtn');
+      savedBtn.style.background = currentColor;
+      savedBtn.dataset.color = currentColor;
+    }
+    currentColor = hex;
+    colorPreview.style.background = hex;
+    hexInput.value = hex.toUpperCase();
+  }
+
+  function updateFromMap(){
+    const hex = hsvToHex(hue, sat, val);
+    setActiveSwatch(null);
+    setColor(hex);
+    drawHueStrip();
+    drawSVSquare();
+  }
+
+  let draggingHue = false, draggingSV = false;
+
+  hueCanvas.addEventListener('mousedown', (e)=>{ e.preventDefault(); draggingHue = true; pickHue(e); });
+  hueCanvas.addEventListener('mousemove', (e)=>{ if(draggingHue) pickHue(e); });
+  svCanvas.addEventListener('mousedown', (e)=>{ e.preventDefault(); draggingSV = true; pickSV(e); });
+  svCanvas.addEventListener('mousemove', (e)=>{ if(draggingSV) pickSV(e); });
+  window.addEventListener('mouseup', ()=>{ draggingHue = false; draggingSV = false; });
+
+  function pickHue(e){
+    const rect = hueCanvas.getBoundingClientRect();
+    const x = Math.max(0, Math.min(hueCanvas.width, (e.clientX-rect.left) * (hueCanvas.width/rect.width)));
+    hue = (x / hueCanvas.width) * 360;
+    updateFromMap();
+  }
+  function pickSV(e){
+    const rect = svCanvas.getBoundingClientRect();
+    const x = Math.max(0, Math.min(svCanvas.width, (e.clientX-rect.left) * (svCanvas.width/rect.width)));
+    const y = Math.max(0, Math.min(svCanvas.height, (e.clientY-rect.top) * (svCanvas.height/rect.height)));
+    sat = (x / svCanvas.width) * 100;
+    val = 100 - (y / svCanvas.height) * 100;
+    updateFromMap();
+  }
+
+  hexInput.addEventListener('change', ()=>{
+    let v = hexInput.value.trim();
+    if(!v.startsWith('#')) v = '#'+v;
+    if(/^#[0-9A-Fa-f]{6}$/.test(v)){
+      setActiveSwatch(null);
+      setColor(v);
+    } else {
+      hexInput.value = currentColor.toUpperCase();
+    }
+  });
+
+  drawHueStrip();
+  drawSVSquare();
+  setColor(currentColor);
+
+  function openReserveDialog(){
+    if(!selection) return;
+    document.getElementById('dialogSub').textContent =
+      `${selection.w * selection.h} squares — $${selection.w * selection.h}`;
+    initPaint(selection);
+
+    const agreeCheckbox = document.getElementById('agreeCheckbox');
+    agreeCheckbox.checked = false;
+    document.getElementById('confirmBtn').disabled = true;
+
+    dialog.showModal();
+  }
+  document.getElementById('reserveBtn').addEventListener('click', openReserveDialog);
+  document.getElementById('fpReserveBtn').addEventListener('click', openReserveDialog);
+  document.getElementById('cancelBtn').addEventListener('click', ()=> dialog.close());
+
+  document.getElementById('agreeCheckbox').addEventListener('change', (e)=>{
+    document.getElementById('confirmBtn').disabled = !e.target.checked;
+  });
+
+  document.getElementById('agreeTermsLink').addEventListener('click', (e)=>{
+    e.preventDefault();
+    dialog.close();
+    document.getElementById('legalSection').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-checkout`;
+
+  document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+    if(!selection) return;
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving your design...';
+
+    // Colors data can be large for big blocks, so it's saved straight to the
+    // database rather than passed through Stripe (which has small size limits
+    // on the data it can carry per checkout).
+    const block = {
+      x: selection.x, y: selection.y, w: selection.w, h: selection.h,
+      link: document.getElementById('linkInput').value || '',
+      name: document.getElementById('nameInput').value || '',
+      colors: paintData.join(',')
+    };
+    const saved = await insertSoldToDB(block);
+    if(!saved){
+      alert('Could not save your design — check the browser console for details.');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Continue to payment';
+      return;
+    }
+
+    confirmBtn.textContent = 'Redirecting to checkout...';
+    const payload = {
+      x: selection.x, y: selection.y, w: selection.w, h: selection.h,
+      successUrl: window.location.href.split('?')[0] + '?claimed=1',
+      cancelUrl: window.location.href.split('?')[0] + '?cancelled=1'
+    };
+
+    try{
+      const res = await fetch(EDGE_FUNCTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if(data.url){
+        window.location.href = data.url; // send to Stripe's real checkout page
+      } else {
+        throw new Error(data.error || 'No checkout URL returned');
+      }
+    } catch(err){
+      console.error('Checkout error:', err);
+      alert('Could not start checkout — check the browser console for details.');
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Continue to payment';
+    }
+  });
+
+  // Easy ways to back out of an accidental selection: the × on the floating
+  // badge, the "Clear selection" link in the panel, or pressing Escape.
+  function clearSelection(){
+    selection = null;
+    lastPaintKey = null;
+    draw();
+    updatePanel();
+  }
+  document.getElementById('fpCloseBtn').addEventListener('click', clearSelection);
+  document.getElementById('clearSelectionBtn').addEventListener('click', clearSelection);
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') clearSelection();
+  });
+
+  // If we just came back from a successful Stripe checkout, refresh sold squares
+  if(new URLSearchParams(window.location.search).get('claimed') === '1'){
+    document.getElementById('coordHint').textContent = 'Payment received — this square will appear once confirmed.';
+  }
+
+  // Hide the floating price badge once the real "Your selection" panel
+  // scrolls into view, so there's never two reserve buttons visible at once.
+  const panelObserver = new IntersectionObserver((entries)=>{
+    panelInView = entries[0].isIntersecting;
+    updateFloatingPriceVisibility();
+  }, { threshold: 0.25 });
+  panelObserver.observe(document.querySelector('.panel'));
+
+  (async function init(){
+    sold = await loadSoldFromDB();
+    draw();
+    updatePanel();
+    updateStats();
+  })();
+})();
+</script>
+
+</body>
+</html>
