@@ -885,27 +885,25 @@
   let sold = []; // array of {x,y,w,h,link,colors,name}, loaded from Supabase
 
   async function loadSoldFromDB(){
-    // Only show squares once payment has actually been confirmed —
-    // unpaid/pending attempts stay invisible and don't block anyone else.
-    // Tries progressively smaller column sets so one missing column never
-    // silently drops a working one too.
-    const attempts = [
-      'x,y,w,h,link,colors,name',
-      'x,y,w,h,link,colors',
-      'x,y,w,h,link,name',
-      'x,y,w,h,link'
-    ];
-    for(const columns of attempts){
-      const { data, error } = await sb.from('pixels').select(columns).eq('status', 'confirmed');
-      if(!error) return data || [];
-      if(!/column/i.test(error.message || '')){
+    // Only confirmed squares are shown. Fetched in pages of 1,000
+    // because Supabase returns at most 1,000 rows per request.
+    const pageSize = 1000;
+    let all = [];
+    for(let from = 0; ; from += pageSize){
+      const { data, error } = await sb.from('pixels')
+        .select('x,y,w,h,link,colors,name')
+        .eq('status', 'confirmed')
+        .order('id', { ascending: true })
+        .range(from, from + pageSize - 1);
+      if(error){
         console.error('Failed to load pixels:', error.message || JSON.stringify(error));
         document.getElementById('coordHint').textContent = 'could not load saved squares';
-        return [];
+        return all;
       }
-      // otherwise a missing-column error — try the next, smaller column set
+      all = all.concat(data || []);
+      if(!data || data.length < pageSize) break;
     }
-    return [];
+    return all;
   }
 
   async function insertSoldToDB(block){
@@ -1421,26 +1419,12 @@
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Saving your design...';
 
-    // Colors data can be large for big blocks, so it's saved straight to the
-    // database rather than passed through Stripe (which has small size limits
-    // on the data it can carry per checkout).
-    const block = {
-      x: selection.x, y: selection.y, w: selection.w, h: selection.h,
-      link: document.getElementById('linkInput').value || '',
-      name: document.getElementById('nameInput').value || '',
-      colors: paintData.join(',')
-    };
-    const saved = await insertSoldToDB(block);
-    if(!saved){
-      alert('Could not save your design — check the browser console for details.');
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Continue to payment';
-      return;
-    }
-
     confirmBtn.textContent = 'Redirecting to checkout...';
     const payload = {
       x: selection.x, y: selection.y, w: selection.w, h: selection.h,
+      link: document.getElementById('linkInput').value || '',
+      name: document.getElementById('nameInput').value || '',
+      colors: paintData.join(','),
       successUrl: window.location.href.split('?')[0] + '?claimed=1',
       cancelUrl: window.location.href.split('?')[0] + '?cancelled=1'
     };
