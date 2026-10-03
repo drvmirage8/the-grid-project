@@ -13,6 +13,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:url" content="https://thegridproject.net">
+<link rel="canonical" href="https://thegridproject.net">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="The Grid — claim a square">
@@ -662,7 +663,7 @@
 
 <section class="grid-hero">
   <div class="grid-viewport" id="scrollWrap">
-    <canvas id="grid" width="1500" height="1000" draggable="false"></canvas>
+    <canvas id="grid" width="1500" height="1000" draggable="false" role="img" aria-label="Interactive 150 by 100 grid of purchasable squares"></canvas>
   </div>
   <div class="floating-price" id="floatingPrice">
     <button class="fp-close" id="fpCloseBtn" title="Clear selection" aria-label="Clear selection">×</button>
@@ -829,8 +830,8 @@
     </div>
 
     <div class="color-map">
-      <canvas id="svCanvas" width="320" height="180" draggable="false"></canvas>
-      <canvas id="hueCanvas" width="320" height="20" draggable="false"></canvas>
+      <canvas id="svCanvas" width="320" height="180" draggable="false" role="img" aria-label="Color saturation and brightness picker"></canvas>
+      <canvas id="hueCanvas" width="320" height="20" draggable="false" role="img" aria-label="Color hue picker"></canvas>
     </div>
     <div class="color-current">
       <span class="swatch-preview" id="colorPreview"></span>
@@ -838,7 +839,7 @@
     </div>
 
     <div class="canvas-scroll paint-wrap">
-      <canvas id="paintCanvas" draggable="false"></canvas>
+      <canvas id="paintCanvas" draggable="false" role="img" aria-label="Paint your selected squares"></canvas>
     </div>
     <div class="paint-toolbar">
       <div class="paint-hint">click or drag to paint a square</div>
