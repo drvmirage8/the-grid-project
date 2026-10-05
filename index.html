@@ -826,7 +826,8 @@
       <button class="swatch-btn" data-color="#6A3EC8" style="background:#6A3EC8"></button>
       <button class="swatch-btn" data-color="#1A2028" style="background:#1A2028"></button>
       <button class="swatch-btn" data-color="#FFFFFF" style="background:#FFFFFF;border:1px solid var(--grid-line-strong)"></button>
-      <button class="swatch-btn saved-swatch" id="savedColorBtn" data-color="#C8912E" title="Switch back to your last color" style="background:#C8912E"></button>
+      <button class="swatch-btn saved-swatch" id="savedColorBtn" data-color="#C8912E" title="Switch back to a recent color" style="background:#C8912E;display:none"></button>
+      <button class="swatch-btn saved-swatch" id="savedColorBtn2" data-color="#C8912E" title="Switch back to a recent color" style="background:#C8912E;display:none"></button>
     </div>
 
     <div class="color-map">
@@ -1348,11 +1349,35 @@
     svCtx.stroke();
   }
 
+  // Remembers the last two DISTINCT colors you switched away from, so going
+  // A -> B -> A -> B (or any mix) never silently loses either one the way a
+  // single overwriting slot used to.
+  let recentColors = [];
+
+  function renderRecentSwatches(){
+    const slots = [document.getElementById('savedColorBtn'), document.getElementById('savedColorBtn2')];
+    slots.forEach((btn, i)=>{
+      const c = recentColors[i];
+      if(c){
+        btn.style.display = '';
+        btn.style.background = c;
+        btn.dataset.color = c;
+      } else {
+        btn.style.display = 'none';
+      }
+    });
+  }
+
   function setColor(hex, syncMap){
     if(hex.toLowerCase() !== currentColor.toLowerCase()){
-      const savedBtn = document.getElementById('savedColorBtn');
-      savedBtn.style.background = currentColor;
-      savedBtn.dataset.color = currentColor;
+      // remember the color we're leaving, if it isn't already remembered
+      if(!recentColors.some(c => c.toLowerCase() === currentColor.toLowerCase())){
+        recentColors.unshift(currentColor);
+      }
+      // the color we're moving TO shouldn't also sit in the "other colors" list
+      recentColors = recentColors.filter(c => c.toLowerCase() !== hex.toLowerCase());
+      recentColors = recentColors.slice(0, 2);
+      renderRecentSwatches();
     }
     currentColor = hex;
     colorPreview.style.background = hex;
