@@ -971,12 +971,21 @@
   let dragEnd = null;
   let selection = null; // {x,y,w,h} in cell units
 
+  // Works for both a mouse event (has clientX/clientY directly) and a touch
+  // event (coordinates live on e.touches[0] or, for touchend, e.changedTouches[0]).
+  function pointFromEvent(e){
+    if(e.touches && e.touches.length) return e.touches[0];
+    if(e.changedTouches && e.changedTouches.length) return e.changedTouches[0];
+    return e;
+  }
+
   function cellFromEvent(e){
+    const p = pointFromEvent(e);
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const px = (e.clientX - rect.left) * scaleX;
-    const py = (e.clientY - rect.top) * scaleY;
+    const px = (p.clientX - rect.left) * scaleX;
+    const py = (p.clientY - rect.top) * scaleY;
     let cx = Math.floor(px / CELL);
     let cy = Math.floor(py / CELL);
     cx = Math.max(0, Math.min(GRID_W-1, cx));
@@ -1140,6 +1149,46 @@
   window.addEventListener('mouseup', ()=>{
     dragStart = null;
   });
+
+  // Same drag-to-select behavior, for a finger instead of a mouse. Reuses the
+  // exact same cellFromEvent/normalizeSelection logic above -- only how the
+  // start/move/end moments are detected differs between touch and mouse.
+  canvas.addEventListener('touchstart', (e)=>{
+    e.preventDefault();
+    dragStart = cellFromEvent(e);
+    dragEnd = dragStart;
+    mouseDownCell = dragStart;
+    dragMoved = false;
+    selection = normalizeSelection(dragStart, dragEnd);
+    draw();
+    updatePanel();
+  }, { passive: false });
+  canvas.addEventListener('touchmove', (e)=>{
+    e.preventDefault();
+    const c = cellFromEvent(e);
+    if(dragStart){
+      if(c.cx !== mouseDownCell.cx || c.cy !== mouseDownCell.cy) dragMoved = true;
+      dragEnd = c;
+      selection = normalizeSelection(dragStart, dragEnd);
+      draw();
+      updatePanel();
+    }
+  }, { passive: false });
+  canvas.addEventListener('touchend', (e)=>{
+    e.preventDefault();
+    dragStart = null;
+    // A tap (no real drag) on an already-sold square with a link should show
+    // the same link preview a mouse click would -- touchend doesn't fire a
+    // 'click' event here since touch-action:none suppresses the synthetic one.
+    if(!dragMoved){
+      const c = cellFromEvent(e);
+      const block = soldBlockAt(c.cx, c.cy);
+      if(block && block.link){
+        const url = safeLinkUrl(block.link);
+        if(url) showLinkPreview(url);
+      }
+    }
+  }, { passive: false });
 
   // A plain click (no drag) on an already-claimed square with a link shows
   // a preview of the destination first — never opens it blindly.
