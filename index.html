@@ -432,6 +432,7 @@
     position: relative;
     border-color: var(--grid-line-strong) !important;
   }
+  .saved-swatch.active{ border-color: var(--text) !important; }
   .saved-swatch::after{
     content: '↺';
     position: absolute;
@@ -806,7 +807,7 @@
     <h3>Refunds</h3>
     <p>All sales are final once your square is confirmed on the grid. Because your square is delivered and displayed immediately, you agree that any statutory withdrawal period for online purchases is waived at purchase. If two people pay for overlapping squares at the same moment, the second payment is refunded automatically in full. If something else went wrong with your payment, email me and I will look into it.</p>
   </div>
-  
+
   <div class="faq-item">
     <h3>Liability</h3>
     <p>This site is provided as-is. I've built and tested it carefully, but I can't guarantee it will always be free of bugs or interruptions. By using this site, you accept that my responsibility for any issue is limited to the amount you actually paid. I'm not liable for indirect or consequential losses.</p>
@@ -1331,9 +1332,10 @@
   paintCanvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); paintDragging = true; paintAt(e.touches[0]); }, { passive: false });
   paintCanvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); if(paintDragging) paintAt(e.touches[0]); }, { passive: false });
   paintCanvas.addEventListener('touchend', ()=>{ paintDragging = false; });
-  
-  document.querySelectorAll('.swatch-btn').forEach(btn=>{
+
+  document.querySelectorAll('.swatch-btn:not(.saved-swatch)').forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      activeSlot = -1;
       setActiveSwatch(btn);
       setColor(btn.dataset.color, true);
     });
@@ -1409,45 +1411,73 @@
     svCtx.stroke();
   }
 
-  // Remembers the last two DISTINCT colors you switched away from, so going
-  // A -> B -> A -> B (or any mix) never silently loses either one the way a
-  // single overwriting slot used to.
-  let recentColors = [];
+  // Two custom color slots. Each slot keeps its own color. The color map and the
+  // hex box edit the active slot. Clicking a slot switches to it and brings its
+  // color back. The preset swatches never touch the slots.
+  const slotBtns = [document.getElementById('savedColorBtn'), document.getElementById('savedColorBtn2')];
+  let slotColors = ['#E07A5F', '#3D5A80'];
+  let activeSlot = -1;   // -1 means a preset swatch is active
+  let lastSlot = 0;      // slot that edits go to when no slot is active
 
-  function renderRecentSwatches(){
-    const slots = [document.getElementById('savedColorBtn'), document.getElementById('savedColorBtn2')];
-    slots.forEach((btn, i)=>{
-      const c = recentColors[i];
-      if(c){
-        btn.style.display = '';
-        btn.style.background = c;
-        btn.dataset.color = c;
-      } else {
-        btn.style.display = 'none';
-      }
+  function renderSlots(){
+    slotBtns.forEach((btn, i)=>{
+      btn.style.display = '';
+      btn.style.background = slotColors[i];
+      btn.dataset.color = slotColors[i];
+      btn.title = 'Custom color ' + (i + 1);
+      btn.classList.toggle('active', i === activeSlot);
     });
   }
 
-  function setColor(hex, syncMap){
-    if(hex.toLowerCase() !== currentColor.toLowerCase()){
-      // remember the color we're leaving, if it isn't already remembered
-      if(!recentColors.some(c => c.toLowerCase() === currentColor.toLowerCase())){
-        recentColors.unshift(currentColor);
-      }
-      // the color we're moving TO shouldn't also sit in the "other colors" list
-      recentColors = recentColors.filter(c => c.toLowerCase() !== hex.toLowerCase());
-      recentColors = recentColors.slice(0, 2);
-      renderRecentSwatches();
+  function hexToHsv(hex){
+    const r = parseInt(hex.slice(1,3),16)/255;
+    const g = parseInt(hex.slice(3,5),16)/255;
+    const b = parseInt(hex.slice(5,7),16)/255;
+    const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+    let h = hue; // greys have no hue, so keep the current one
+    if(d !== 0){
+      if(max === r) h = ((g-b)/d) % 6;
+      else if(max === g) h = (b-r)/d + 2;
+      else h = (r-g)/d + 4;
+      h *= 60;
+      if(h < 0) h += 360;
     }
+    return { h: h, s: max === 0 ? 0 : (d/max)*100, v: max*100 };
+  }
+
+  function setColor(hex){
     currentColor = hex;
     colorPreview.style.background = hex;
     hexInput.value = hex.toUpperCase();
   }
 
-  function updateFromMap(){
-    const hex = hsvToHex(hue, sat, val);
+  function editCustomColor(hex){
+    if(activeSlot < 0) activeSlot = lastSlot;
+    lastSlot = activeSlot;
+    slotColors[activeSlot] = hex;
     setActiveSwatch(null);
     setColor(hex);
+    renderSlots();
+  }
+
+  function pickSlot(i){
+    activeSlot = i;
+    lastSlot = i;
+    setActiveSwatch(null);
+    const hex = slotColors[i];
+    const c = hexToHsv(hex);
+    hue = c.h; sat = c.s; val = c.v;
+    setColor(hex);
+    drawHueStrip();
+    drawSVSquare();
+    renderSlots();
+  }
+
+  slotBtns.forEach((btn, i)=> btn.addEventListener('click', ()=> pickSlot(i)));
+
+  function updateFromMap(){
+    const hex = hsvToHex(hue, sat, val);
+    editCustomColor(hex);
     drawHueStrip();
     drawSVSquare();
   }
@@ -1486,8 +1516,11 @@
     let v = hexInput.value.trim();
     if(!v.startsWith('#')) v = '#'+v;
     if(/^#[0-9A-Fa-f]{6}$/.test(v)){
-      setActiveSwatch(null);
-      setColor(v);
+      const c = hexToHsv(v);
+      hue = c.h; sat = c.s; val = c.v;
+      editCustomColor(v);
+      drawHueStrip();
+      drawSVSquare();
     } else {
       hexInput.value = currentColor.toUpperCase();
     }
@@ -1502,6 +1535,7 @@
   drawHueStrip();
   drawSVSquare();
   setColor(currentColor);
+  renderSlots();
 
   function openReserveDialog(){
     if(!selection) return;
