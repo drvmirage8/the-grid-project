@@ -710,9 +710,9 @@
   <p>Sudan is currently facing one of the largest humanitarian crises in the world. Famine has been confirmed in parts of Darfur and Kordofan, and tens of millions of people need urgent help. The World Food Programme is one of the organizations leading the food response on the ground there.</p>
 
   <h3>How this actually works</h3>
-  <p>Every payment made on this site goes through Stripe, the same as any normal purchase. Once the 15,000-square goal is reached, half of everything raised will be donated directly through WFP's official donation page. Not a middleman, not an automatic split, a real transfer I make myself. I'll post the donation confirmation right here on this page once it's done, so the pledge isn't just a promise on a webpage.</p>
+  <p>Every payment made on this site goes through Stripe. Once the 15,000 square goal is reached, half of everything raised will be donated directly through the World Food Programme’s official donation page. Then I’ll post the donation confirmation down below.</p>
   <p style="margin-top:14px;">Want to donate to WFP directly yourself, outside of this project? <a href="https://www.wfp.org/support-us" target="_blank" rel="noopener" class="wfp-link">Donate here</a>.</p>
-  <p style="margin-top:14px; font-size:12px;">This is a personal pledge, not an official partnership with or endorsement by the World Food Programme. I'm simply directing part of what's raised here to their public donation channel myself.</p>
+  <p style="margin-top:14px; font-size:12px;">This is not an official partnership or endorsement by the World Food Programme. It’s a personal pledge to direct half of what’s earned here towards the official site myself once the goal is reached.</p>
 
   <div class="donation-proof" id="donationProof">
     <p class="creator-label">Donation proof</p>
@@ -730,37 +730,37 @@
 
   <div class="faq-item">
     <h3>What happens after I pay?</h3>
-    <p>Your painted design is saved and shows up on the grid for everyone to see, for as long as this site is running. If you added a link, clicking your square takes visitors straight to it.</p>
+    <p>Your painted designs would appear on the grid for everyone to see, for as long as this site is running. If you added a link, clicking your square takes visitors straight to it.</p>
   </div>
 
   <div class="faq-item">
     <h3>Is my square really mine to keep?</h3>
-    <p>Yes. Once it's confirmed, it's yours, with no expiry date and no renewal fees. I intend to keep this site running indefinitely, though like any website I can't guarantee it against something outside my control, like a hosting provider shutting down. That risk is accepted as part of buying a square here.</p>
+    <p>Yes, Once you reserved and bought your square, it’s yours, with no expiry and renewal fees. It is intended by me to keep this site running indefinitely, but it isn’t a guarantee outside of my control if such events do occur that cause the site shutdown. That risk is accepted as part of buying a square here.</p>
   </div>
 
   <div class="faq-item">
     <h3>Can someone else buy a square I already own?</h3>
-    <p>No. Once a square is claimed, it's locked. No one else can select or purchase it, including me.</p>
+    <p>No. Once bought, No one else can claim your square or bid for it.</p>
   </div>
 
   <div class="faq-item">
     <h3>Can I change my design after buying?</h3>
-    <p>Not currently. What you paint before checking out is what gets saved. Think of it like the original pixel projects this is inspired by: once it's placed, it stays.</p>
+    <p>Not currently. What is painted before the purchase would stay as it is after purchase.</p>
   </div>
 
   <div class="faq-item">
     <h3>How do I know my payment actually went through?</h3>
-    <p>You'll be taken through Stripe's secure checkout, the same system countless real businesses use. Once payment is confirmed, your square appears on the grid, and that's your confirmation.</p>
+    <p>You’ll be taken through Stripe’s checkout just like any other checkout done online. Once payment is confirmed, your square appears on the grid, which is your confirmation.</p>
   </div>
 
   <div class="faq-item">
     <h3>Is this a real charity donation, or just a claim?</h3>
-    <p>It's real. Once the 15,000-square goal is reached, I'll personally donate half of everything raised to the World Food Programme through their official site, and post proof of the donation right here.</p>
+    <p>Once the 15,000 square goal is reached, I’ll personally donate half of everything raised to the World Food Programme through their official site, and post proof of the donation above.</p>
   </div>
 
   <div class="faq-item">
     <h3>What's the minimum I can buy?</h3>
-    <p>Just one square, if that's all you want. There's no minimum block size.</p>
+    <p>One square is enough to be on the grid. There’s no minimum block size.</p>
   </div>
 
   <div class="faq-item">
@@ -780,7 +780,7 @@
 
   <div class="faq-item">
     <h3>Built with AI assistance</h3>
-    <p>This site's design, code, and written content were built with the help of AI tools, under my direction and review. I'm sharing that plainly here.</p>
+    <p>This site was made with the assistance of AI tools under my supervision.</p>
   </div>
 
   <div class="faq-item">
@@ -809,12 +809,12 @@
 
   <div class="faq-item">
     <h3>Refunds</h3>
-    <p>All sales are final once your square is confirmed on the grid. Because your square is delivered and displayed immediately, you agree that any statutory withdrawal period for online purchases is waived at purchase. If two people pay for overlapping squares at the same moment, the second payment is refunded automatically in full. If something else went wrong with your payment, email me and I will look into it.</p>
+    <p>All sales are final once your square is confirmed on the grid. Because your square would appear on the grid immediately, you agree that any statutory withdrawal period for online purchases is waived at purchase. If two people pay for overlapping squares at the same moment, the second payment is refunded automatically in full. If something else went wrong with your payment, please contact me.</p>
   </div>
 
   <div class="faq-item">
     <h3>Liability</h3>
-    <p>This site is provided as-is. I've built and tested it carefully, but I can't guarantee it will always be free of bugs or interruptions. By using this site, you accept that my responsibility for any issue is limited to the amount you actually paid. I'm not liable for indirect or consequential losses.</p>
+    <p>This site is provided as is. I've tested it carefully, but I can't guarantee it will always be free of bugs or interruptions. By using this site, you accept that my responsibility for any issue is limited to the amount you actually paid. I'm not liable for indirect or consequential losses.</p>
   </div>
 
   <div class="faq-item">
@@ -1566,17 +1566,11 @@
     dialog.close();
     document.getElementById('legalSection').scrollIntoView({ behavior: 'smooth' });
   });
-  // Payments only work on the real domain. Any other address (previews, staging) is view-only.
-  const IS_LIVE_SITE = ['thegridproject.net', 'www.thegridproject.net'].includes(window.location.hostname);
-  if(!IS_LIVE_SITE){ document.getElementById('previewBanner').style.display = 'block'; }
+
   const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-checkout`;
 
   document.getElementById('confirmBtn').addEventListener('click', async ()=>{
     if(!selection) return;
-        if(!IS_LIVE_SITE){
-      alert('This is a preview. Payments are turned off here.');
-      return;
-    }
     const confirmBtn = document.getElementById('confirmBtn');
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Saving your design...';
