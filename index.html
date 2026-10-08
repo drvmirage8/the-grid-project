@@ -640,7 +640,7 @@
 </style>
 </head>
 <body>
-
+<div id="previewBanner" style="display:none;background:#1A2028;color:#fff;padding:10px 16px;font-size:12px;text-align:center;">Preview version: you can look around and test painting, but payments are turned off.</div>
 <header>
   <div class="kicker">15,000 squares total, $1 each</div>
   <h1>Claim a square of the grid. Yours to keep.</h1>
@@ -1562,11 +1562,17 @@
     dialog.close();
     document.getElementById('legalSection').scrollIntoView({ behavior: 'smooth' });
   });
-
+  // Payments only work on the real domain. Any other address (previews, staging) is view-only.
+  const IS_LIVE_SITE = ['thegridproject.net', 'www.thegridproject.net'].includes(window.location.hostname);
+  if(!IS_LIVE_SITE){ document.getElementById('previewBanner').style.display = 'block'; }
   const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-checkout`;
 
   document.getElementById('confirmBtn').addEventListener('click', async ()=>{
     if(!selection) return;
+        if(!IS_LIVE_SITE){
+      alert('This is a preview. Payments are turned off here.');
+      return;
+    }
     const confirmBtn = document.getElementById('confirmBtn');
     confirmBtn.disabled = true;
     confirmBtn.textContent = 'Saving your design...';
