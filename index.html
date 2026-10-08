@@ -635,6 +635,7 @@
     padding-bottom: 2px;
   }
   .contact-email:hover{ color: var(--brass); border-color: var(--brass); }
+  #paintCanvas, #svCanvas, #hueCanvas{ touch-action: none; }
 </style>
 </head>
 <body>
@@ -842,6 +843,7 @@
     <div class="color-current">
       <span class="swatch-preview" id="colorPreview"></span>
       <input id="hexInput" type="text" value="#C8912E" maxlength="7">
+      <span class="paint-hint">or type a hex code</span>
     </div>
 
     <div class="canvas-scroll paint-wrap">
@@ -1326,6 +1328,10 @@
   paintCanvas.addEventListener('mousemove', (e)=>{ if(paintDragging) paintAt(e); });
   window.addEventListener('mouseup', ()=>{ paintDragging = false; });
 
+  paintCanvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); paintDragging = true; paintAt(e.touches[0]); }, { passive: false });
+  paintCanvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); if(paintDragging) paintAt(e.touches[0]); }, { passive: false });
+  paintCanvas.addEventListener('touchend', ()=>{ paintDragging = false; });
+  
   document.querySelectorAll('.swatch-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       setActiveSwatch(btn);
@@ -1453,6 +1459,13 @@
   svCanvas.addEventListener('mousedown', (e)=>{ e.preventDefault(); draggingSV = true; pickSV(e); });
   svCanvas.addEventListener('mousemove', (e)=>{ if(draggingSV) pickSV(e); });
   window.addEventListener('mouseup', ()=>{ draggingHue = false; draggingSV = false; });
+
+  hueCanvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); draggingHue = true; pickHue(e.touches[0]); }, { passive: false });
+  hueCanvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); if(draggingHue) pickHue(e.touches[0]); }, { passive: false });
+  hueCanvas.addEventListener('touchend', ()=>{ draggingHue = false; });
+  svCanvas.addEventListener('touchstart', (e)=>{ e.preventDefault(); draggingSV = true; pickSV(e.touches[0]); }, { passive: false });
+  svCanvas.addEventListener('touchmove', (e)=>{ e.preventDefault(); if(draggingSV) pickSV(e.touches[0]); }, { passive: false });
+  svCanvas.addEventListener('touchend', ()=>{ draggingSV = false; });
 
   function pickHue(e){
     const rect = hueCanvas.getBoundingClientRect();
