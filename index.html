@@ -659,6 +659,18 @@
   .fp-size{ font-size: 14px; padding-right: 26px; }
   .fp-amount{ font-size: 36px; }
   .fp-reserve{ margin-top: 10px; padding: 13px 26px; font-size: 15px; }
+    .side{ display:flex; flex-direction:column; gap:20px; }
+  .side .panel{ position: static; }
+  .lb-card{ background: var(--panel); border: 1px solid var(--grid-line-strong); border-radius: var(--radius); padding: 22px; }
+  .lb-card h2{ font-family:'Fraunces', serif; font-weight:500; font-size: 20px; margin: 0 0 4px 0; color: var(--text); }
+  .lb-sub{ font-size: 12px; color: var(--text-dim); margin: 0 0 14px 0; line-height: 1.5; }
+  .lb-rows{ list-style:none; margin:0; padding:0; }
+  .lb-row{ position:relative; display:grid; grid-template-columns: 26px 1fr auto; align-items:center; gap:8px; min-height: 38px; padding: 6px 0; border-top: 1px solid var(--grid-line); font-size: 13px; color: var(--text); }
+  .lb-rank{ color: var(--text-dim); }
+  .lb-count{ color: var(--brass-dim); font-weight:600; }
+  .lb-row.first .lb-rank, .lb-row.first .lb-name{ color: var(--brass-dim); font-weight:600; }
+  .lb-row.empty .lb-rank, .lb-row.empty .lb-name{ color: var(--text-dim); opacity:.6; }
+  .lb-bar{ position:absolute; left:34px; bottom:0; height:3px; background: var(--brass); opacity:.55; width: calc((100% - 34px) * var(--r, 0)); }
 </style>
 </head>
 <body>
@@ -708,6 +720,7 @@
     </div>
   </div>
 
+    <aside class="side">
   <div class="panel">
     <h2>Your selection</h2>
     <div class="sub">click and drag to select any size</div>
@@ -724,13 +737,13 @@
 
     <div class="hint">Clicking reserve opens a real Stripe checkout page. Your square shows up here once payment is confirmed.</div>
   </div>
+        <div class="lb-card">
+    <h2>Leaderboard</h2>
+    <p class="lb-sub">Top 10 teams by squares owned. For fun, no prizes.</p>
+    <ol id="leaderboardList" class="lb-rows"></ol>
+  </div>
+  </aside>
 </main>
-  
-<section class="leaderboard">
-  <h2>Leaderboard</h2>
-  <p class="lb-note">Current ranking by squares owned, for fun. No prizes, and rankings can change at any time.</p>
-  <ol id="leaderboardList" class="lb-list"><li class="lb-empty">No teams yet. Pick a team when you claim a square.</li></ol>
-</section>
 
   <section class="charity-note">
   <div class="creator-note">
@@ -1293,26 +1306,32 @@
       .slice(0, 10);
     const list = document.getElementById('leaderboardList');
     list.textContent = '';
-    if(!rows.length){
+    const top = rows.length ? rows[0].squares : 1;
+    for(let i = 0; i < 10; i++){
+      const r = rows[i];
       const li = document.createElement('li');
-      li.className = 'lb-empty';
-      li.textContent = 'No teams yet. Pick a team when you claim a square.';
+      li.className = 'lb-row' + (r ? '' : ' empty') + (r && i === 0 ? ' first' : '');
+      const rank = document.createElement('span');
+      rank.className = 'lb-rank';
+      rank.textContent = String(i + 1);
+      const name = document.createElement('span');
+      name.className = 'lb-name';
+      name.textContent = r ? r.name : (i === 0 ? 'Be the first team' : '-');
+      const count = document.createElement('span');
+      count.className = 'lb-count';
+      count.textContent = r ? r.squares.toLocaleString() : '';
+      li.appendChild(rank);
+      li.appendChild(name);
+      li.appendChild(count);
+      if(r){
+        const bar = document.createElement('span');
+        bar.className = 'lb-bar';
+        bar.style.setProperty('--r', String(r.squares / top));
+        li.appendChild(bar);
+      }
       list.appendChild(li);
-      return;
     }
-    rows.forEach((r, i)=>{
-      const li = document.createElement('li');
-      const left = document.createElement('span');
-      left.textContent = (i + 1) + '. ' + r.name;
-      const right = document.createElement('span');
-      right.className = 'lb-count';
-      right.textContent = r.squares.toLocaleString() + (r.squares === 1 ? ' square' : ' squares');
-      li.appendChild(left);
-      li.appendChild(right);
-      list.appendChild(li);
-    });
   }
-
   // --- Paint tool state ---
   let paintData = [];      // array of hex strings (no '#'), one per cell, row-major
   let paintW = 0, paintH = 0;
