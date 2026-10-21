@@ -654,6 +654,11 @@
   .lb-list li{ display:flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid var(--grid-line-strong); font-size: 13px; color: var(--text); }
   .lb-list .lb-count{ color: var(--brass-dim); }
   .lb-list .lb-empty{ color: var(--text-dim); }
+    .floating-price{ padding: 22px 28px; min-width: 240px; max-width: calc(100vw - 32px); gap: 6px; bottom: 32px; right: 32px; }
+  .fp-close{ font-size: 24px; top: 8px; right: 12px; padding: 6px; }
+  .fp-size{ font-size: 14px; padding-right: 26px; }
+  .fp-amount{ font-size: 36px; }
+  .fp-reserve{ margin-top: 10px; padding: 13px 26px; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -727,10 +732,12 @@
   <ol id="leaderboardList" class="lb-list"><li class="lb-empty">No teams yet. Pick a team when you claim a square.</li></ol>
 </section>
 
+  <section class="charity-note">
   <div class="creator-note">
     <p class="creator-label">A note from the creator who made this</p>
     <p class="creator-text">This project was heavily inspired by The Million Dollar Homepage, a site created back in August 2005. It started off as a hobby, then turned into something with more potential, with the goal of creating an environment for people to leave a mark on something, while also giving people value by letting them promote their businesses or creativity through this site.</p>
   </div>
+  </section>
 </section>
 
 <section class="faq-section">
