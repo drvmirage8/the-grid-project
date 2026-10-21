@@ -637,6 +637,23 @@
   }
   .contact-email:hover{ color: var(--brass); border-color: var(--brass); }
   #paintCanvas, #svCanvas, #hueCanvas{ touch-action: none; }
+    .dialog-inner select{
+    width:100%;
+    background: var(--panel-hi);
+    border: 1px solid var(--grid-line-strong);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .leaderboard{ max-width: 700px; margin: 48px auto 0; padding: 0 24px; }
+  .leaderboard h2{ font-family:'Fraunces', serif; font-weight:500; font-size: 24px; margin: 0 0 8px; color: var(--text); }
+  .lb-note{ font-size: 12px; color: var(--text-dim); margin: 0 0 16px; line-height: 1.6; }
+  .lb-list{ list-style: none; margin: 0; padding: 0; }
+  .lb-list li{ display:flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-top: 1px solid var(--grid-line-strong); font-size: 13px; color: var(--text); }
+  .lb-list .lb-count{ color: var(--brass-dim); }
+  .lb-list .lb-empty{ color: var(--text-dim); }
 </style>
 </head>
 <body>
@@ -645,7 +662,6 @@
   <div class="kicker">15,000 squares total, $1 each</div>
   <h1>Claim a square of the grid. Yours to keep.</h1>
   <p class="lede">Every square is $1. Paint your block any colors you like, add a link if you want, and it stays exactly as you left it. No expiry, no renewal fees.</p>
-  <p class="lede pledge">Half of everything raised here goes to the <a href="https://www.wfp.org/support-us" target="_blank" rel="noopener" class="wfp-link">World Food Programme's</a> Sudan response once the goal is reached.</p>
 
   <div class="stats">
     <div class="stat">
@@ -704,20 +720,12 @@
     <div class="hint">Clicking reserve opens a real Stripe checkout page. Your square shows up here once payment is confirmed.</div>
   </div>
 </main>
-
-<section class="charity-note">
-  <h2>Why the World Food Programme</h2>
-  <p>Sudan is currently facing one of the largest humanitarian crises in the world. Famine has been confirmed in parts of Darfur and Kordofan, and tens of millions of people need urgent help. The World Food Programme is one of the organizations leading the food response on the ground there.</p>
-
-  <h3>How this actually works</h3>
-  <p>Every payment made on this site goes through Stripe. Once the 15,000 square goal is reached, half of everything raised will be donated directly through the World Food Programme’s official donation page. Then I’ll post the donation confirmation down below.</p>
-  <p style="margin-top:14px;">Want to donate to WFP directly yourself, outside of this project? <a href="https://www.wfp.org/support-us" target="_blank" rel="noopener" class="wfp-link">Donate here</a>.</p>
-  <p style="margin-top:14px; font-size:12px;">This is not an official partnership or endorsement by the World Food Programme. It’s a personal pledge to direct half of what’s earned here towards the official site myself once the goal is reached.</p>
-
-  <div class="donation-proof" id="donationProof">
-    <p class="creator-label">Donation proof</p>
-    <p style="font-size:13px; color:var(--text-dim); margin:0;">Not yet reached. Proof of the actual transfer will be posted here once the 15,000-square goal is hit.</p>
-  </div>
+  
+<section class="leaderboard">
+  <h2>Leaderboard</h2>
+  <p class="lb-note">Current ranking by squares owned, for fun. No prizes, and rankings can change at any time.</p>
+  <ol id="leaderboardList" class="lb-list"><li class="lb-empty">No teams yet. Pick a team when you claim a square.</li></ol>
+</section>
 
   <div class="creator-note">
     <p class="creator-label">A note from the creator who made this</p>
@@ -730,7 +738,7 @@
 
   <div class="faq-item">
     <h3>What happens after I pay?</h3>
-    <p>Your painted designs would appear on the grid for everyone to see, for as long as this site is running. If you added a link, clicking your square takes visitors straight to it.</p>
+    <p>Your painted designs will appear on the grid for everyone to see, for as long as this site is running. If you added a link, clicking your square takes visitors straight to it.</p>
   </div>
 
   <div class="faq-item">
@@ -790,7 +798,7 @@
 
   <div class="faq-item">
     <h3>Privacy</h3>
-    <p><strong style="color:var(--text);">What this site stores.</strong> When you claim a square, the site stores the position and size of your block, the colors you painted, the optional name and link you enter, and a record of the payment (the amount and a Stripe transaction reference). Everything except the payment record is displayed publicly on the grid. This site does not store your email address, billing details, or card details.</p>
+    <p><strong style="color:var(--text);">What this site stores.</strong> When you claim a square, the site stores the position and size of your block, the colors you painted, the optional name, link, and country team you choose, and a record of the payment (the amount and a Stripe transaction reference). Everything except the payment record is displayed publicly on the grid. This site does not store your email address, billing details, or card details.</p>
     <p style="margin-top:10px;"><strong style="color:var(--text);">Payments.</strong> Payments are processed by <a class="wfp-link" href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe</a>. Your card and billing details are entered on Stripe's checkout page and handled by Stripe under its own privacy policy. They never pass through or are stored on this site.</p>
     <p style="margin-top:10px;"><strong style="color:var(--text);">Abuse prevention.</strong> When you start a checkout, your IP address is stored temporarily to limit repeated attempts. It is deleted automatically within 24 hours.</p>
     <p style="margin-top:10px;"><strong style="color:var(--text);">Service providers.</strong> This site runs on Supabase (database) and Vercel (hosting). As with any web host, these providers process technical data such as IP addresses and request logs in order to deliver the site. Fonts are loaded from Google Fonts and a code library from jsDelivr, so those providers also receive your IP address when a page loads. This site sets no cookies of its own and uses no analytics or advertising tools, and it does not sell or share personal data for marketing. Stripe's checkout page may set its own cookies.</p>
@@ -809,12 +817,16 @@
 
   <div class="faq-item">
     <h3>Refunds</h3>
-    <p>All sales are final once your square is confirmed on the grid. Because your square would appear on the grid immediately, you agree that any statutory withdrawal period for online purchases is waived at purchase. If two people pay for overlapping squares at the same moment, the second payment is refunded automatically in full. If something else went wrong with your payment, please contact me.</p>
-  </div>
+    <p>All sales are final once your square is confirmed on the grid. Because your square is delivered and displayed on the grid immediately, you agree that any statutory withdrawal period for online purchases is waived at purchase. If two people pay for overlapping squares at the same moment, the second payment is refunded automatically in full. If something else went wrong with your payment, email me and I will look into it.</p>
 
   <div class="faq-item">
     <h3>Liability</h3>
     <p>This site is provided as is. I've tested it carefully, but I can't guarantee it will always be free of bugs or interruptions. By using this site, you accept that my responsibility for any issue is limited to the amount you actually paid. I'm not liable for indirect or consequential losses.</p>
+  </div>
+
+    <div class="faq-item">
+    <h3>Leaderboard</h3>
+    <p>The leaderboard ranks teams by the number of squares owned. It is for fun, carries no prize or monetary value, and may be changed or paused at any time. Choosing a team is optional and cannot be changed after purchase.</p>
   </div>
 
   <div class="faq-item">
@@ -866,6 +878,9 @@
     <label for="nameInput">Name (optional, shown when someone hovers your square)</label>
     <input id="nameInput" type="text" placeholder="Your name or project" maxlength="150">
 
+    <label for="teamInput">Team (optional, adds your squares to a country's ranking)</label>
+    <select id="teamInput"><option value="">No team</option></select>
+    
     <label for="linkInput">Link (optional, where your square points to)</label>
     <input id="linkInput" type="text" placeholder="https://" maxlength="500">
 
@@ -924,7 +939,7 @@
     let all = [];
     for(let from = 0; ; from += pageSize){
       const { data, error } = await sb.from('pixels')
-        .select('x,y,w,h,link,colors,name')
+        .select('x,y,w,h,link,colors,name,team')
         .eq('status', 'confirmed')
         .order('id', { ascending: true })
         .range(from, from + pageSize - 1);
@@ -1240,6 +1255,56 @@
   });
 
   const dialog = document.getElementById('claimDialog');
+  
+  // --- Teams and leaderboard (countries only, for fun, no prizes) ---
+  const TEAM_CODES = 'AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ');
+  const regionNames = (typeof Intl !== 'undefined' && Intl.DisplayNames) ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+  function teamName(code){
+    try{ return regionNames ? regionNames.of(code) : code; } catch(e){ return code; }
+  }
+  (function fillTeamSelect(){
+    const sel = document.getElementById('teamInput');
+    TEAM_CODES
+      .map(c => ({ code: c, name: teamName(c) }))
+      .sort((a,b) => a.name.localeCompare(b.name))
+      .forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.code;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+  })();
+
+  function renderLeaderboard(){
+    const totals = {};
+    sold.forEach(b=>{
+      if(b.team) totals[b.team] = (totals[b.team] || 0) + b.w * b.h;
+    });
+    const rows = Object.keys(totals)
+      .map(code => ({ code: code, name: teamName(code), squares: totals[code] }))
+      .sort((a,b) => b.squares - a.squares || a.name.localeCompare(b.name))
+      .slice(0, 10);
+    const list = document.getElementById('leaderboardList');
+    list.textContent = '';
+    if(!rows.length){
+      const li = document.createElement('li');
+      li.className = 'lb-empty';
+      li.textContent = 'No teams yet. Pick a team when you claim a square.';
+      list.appendChild(li);
+      return;
+    }
+    rows.forEach((r, i)=>{
+      const li = document.createElement('li');
+      const left = document.createElement('span');
+      left.textContent = (i + 1) + '. ' + r.name;
+      const right = document.createElement('span');
+      right.className = 'lb-count';
+      right.textContent = r.squares.toLocaleString() + (r.squares === 1 ? ' square' : ' squares');
+      li.appendChild(left);
+      li.appendChild(right);
+      list.appendChild(li);
+    });
+  }
 
   // --- Paint tool state ---
   let paintData = [];      // array of hex strings (no '#'), one per cell, row-major
@@ -1580,6 +1645,7 @@
       x: selection.x, y: selection.y, w: selection.w, h: selection.h,
       link: document.getElementById('linkInput').value || '',
       name: document.getElementById('nameInput').value || '',
+      team: document.getElementById('teamInput').value || '',
       colors: paintData.join(','),
       successUrl: window.location.href.split('?')[0] + '?claimed=1',
       cancelUrl: window.location.href.split('?')[0] + '?cancelled=1'
@@ -1646,6 +1712,7 @@
     draw();
     updatePanel();
     updateStats();
+    renderLeaderboard();
   })();
 })();
 </script>
