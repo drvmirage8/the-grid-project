@@ -1197,7 +1197,7 @@ if(hoverBlock){
   }
 
   if(hoverBlock.team){
-    details.push('Team: ' + teamName(hoverBlock.team));
+    details.push(teamFlag(hoverBlock.team) + ' Team: ' + teamName(hoverBlock.team));
   } else {
     details.push('Team: No team');
   }
@@ -1352,7 +1352,9 @@ if(hoverBlock){
       rank.textContent = String(i + 1);
       const name = document.createElement('span');
       name.className = 'lb-name';
-      name.textContent = r ? r.name : (i === 0 ? 'Be the first team' : '-');
+      name.textContent = r
+      ? `${teamFlag(r.code)} ${r.name}`
+      : (i === 0 ? 'Be the first team' : '-');
       const count = document.createElement('span');
       count.className = 'lb-count';
       count.textContent = r ? r.squares.toLocaleString() : '';
