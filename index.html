@@ -1310,6 +1310,14 @@ if(hoverBlock){
   function teamName(code){
     try{ return regionNames ? regionNames.of(code) : code; } catch(e){ return code; }
   }
+  
+  function teamFlag(code){
+    if(!code || !/^[A-Z]{2}$/i.test(code)) return '🏳️';
+    return String.fromCodePoint(
+      ...code.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0))
+    );
+  }
+
   (function fillTeamSelect(){
     const sel = document.getElementById('teamInput');
     TEAM_CODES
@@ -1318,7 +1326,7 @@ if(hoverBlock){
       .forEach(t => {
         const opt = document.createElement('option');
         opt.value = t.code;
-        opt.textContent = t.name;
+        opt.textContent = `${teamFlag(t.code)} ${t.name}`;
         sel.appendChild(opt);
       });
   })();
