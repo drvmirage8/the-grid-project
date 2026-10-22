@@ -1184,16 +1184,34 @@
     const c = cellFromEvent(e);
     document.getElementById('coordHint').textContent = `${c.cx}, ${c.cy}`;
 
-    const hoverBlock = soldBlockAt(c.cx, c.cy);
-    if(hoverBlock && (hoverBlock.name || hoverBlock.link)){
-      canvas.style.cursor = hoverBlock.link ? 'pointer' : 'default';
-      canvas.title = hoverBlock.name
-        ? (hoverBlock.link ? `${hoverBlock.name}: ${hoverBlock.link}` : hoverBlock.name)
-        : hoverBlock.link;
-    } else {
-      canvas.style.cursor = 'crosshair';
-      canvas.title = '';
-    }
+
+const hoverBlock = soldBlockAt(c.cx, c.cy);
+
+if(hoverBlock){
+  canvas.style.cursor = hoverBlock.link ? 'pointer' : 'default';
+
+  const details = [];
+
+  if(hoverBlock.name){
+    details.push(hoverBlock.name);
+  }
+
+  if(hoverBlock.team){
+    details.push('Team: ' + teamName(hoverBlock.team));
+  } else {
+    details.push('Team: No team');
+  }
+
+  if(hoverBlock.link){
+    details.push(hoverBlock.link);
+  }
+
+  canvas.title = details.join('\n');
+} else {
+  canvas.style.cursor = 'crosshair';
+  canvas.title = '';
+}
+
 
     if(dragStart){
       if(c.cx !== mouseDownCell.cx || c.cy !== mouseDownCell.cy) dragMoved = true;
