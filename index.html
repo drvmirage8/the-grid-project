@@ -1311,12 +1311,10 @@ if(hoverBlock){
     try{ return regionNames ? regionNames.of(code) : code; } catch(e){ return code; }
   }
   
-  function teamFlag(code){
-    if(!code || !/^[A-Z]{2}$/i.test(code)) return '🏳️';
-    return String.fromCodePoint(
-      ...code.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0))
-    );
-  }
+  function teamFlagUrl(code){
+  if(!code || !/^[A-Z]{2}$/i.test(code)) return '';
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+}
 
   (function fillTeamSelect(){
     const sel = document.getElementById('teamInput');
